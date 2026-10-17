@@ -1,72 +1,53 @@
-export const CATEGORIES = ["全部", "日常", "感情", "美食", "籃球", "政治", "汽車"] as const;
+/**
+ * 與 Supabase 資料表欄位對應的 TypeScript 型別（snake_case）。
+ */
 
+/** AI 邏輯評分：1 ~ 5 星 */
+export type AiRating = 1 | 2 | 3 | 4 | 5;
+
+export const CATEGORIES = ["全部", "日常", "感情", "美食", "籃球", "政治", "汽車"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export type PostCategory = Exclude<Category, "全部">;
 
-export type LogicSource = "openai" | "fallback" | "preview";
-
-export type Profile = {
+/** profiles 資料表 */
+export interface Profile {
   id: string;
   username: string;
-  displayName: string;
-  avatarUrl: string;
-  bio: string;
-  countryCode: string;
-  countryName: string;
-  flag: string;
-  joinedAt: string;
-  joinedLabel: string;
-  avgLogicScore: number;
-  speechCount: number;
-};
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  country_code: string | null;
+  created_at: string; // ISO 8601
+}
 
-export type Comment = {
+/** posts 資料表 */
+export interface Post {
   id: string;
-  postId: string;
-  parentId: string | null;
-  author: Profile;
-  content: string;
-  createdAt: string;
-  timeLabel: string;
-  logicScore: number;
-  logicComment: string;
-  logicSource?: LogicSource;
-  replies: Comment[];
-};
-
-export type Post = {
-  id: string;
-  author: Profile;
-  category: PostCategory;
+  author_id: string;
   title: string;
-  excerpt: string;
   content: string;
-  imageUrl: string | null;
-  createdAt: string;
-  timeLabel: string;
-  logicScore: number;
-  logicComment: string;
-  logicSource?: LogicSource;
-  ipFlag: string;
-  ipCountry: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  liked?: boolean;
-  sharedBy?: string[];
-  commentThread?: Comment[];
-  local?: boolean;
-};
+  category?: PostCategory | null;
+  ai_rating: AiRating;
+  ai_summary: string;
+  created_at: string; // ISO 8601
+  updated_at?: string | null;
+  /** 透過 join 取得的作者資料 */
+  author?: Profile;
+}
 
-export type ProfileBundle = {
-  profile: Profile;
-  posts: Post[];
-  replies: { post: Post; comment: Comment }[];
-  shares: Post[];
-};
+/** comments 資料表 */
+export interface Comment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  parent_id: string | null;
+  content: string;
+  ai_rating: AiRating | null;
+  ai_summary: string | null;
+  created_at: string; // ISO 8601
+  /** 透過 join 取得的作者資料 */
+  author?: Profile;
+}
 
-export type LogicEvaluation = {
-  score: number;
-  comment: string;
-  source: "openai" | "fallback";
-};
+/** 新增文章時送出的欄位（AI 評分由後端產生） */
+export type NewPostInput = Pick<Post, "title" | "content">;
